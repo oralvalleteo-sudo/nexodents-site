@@ -1,13 +1,10 @@
-(()=>{
- const prices={gratis:[0,0],basico:[39.90,383.04],profissional:[79.90,767.04],premium:[119.90,1151.04]};
- const qs=new URLSearchParams(location.search),p=prices[qs.get('plano')]?qs.get('plano'):'gratis';
- const annual=qs.get('ciclo')==='annual'&&p!=='gratis';
- const format=n=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
- const name={gratis:'Free',basico:'Básico',profissional:'Profissional',premium:'Premium'}[p];
- document.getElementById('nd-plan-description').textContent=p==='gratis'?'Plano Free · gratuito':annual?`${name} · ${format(prices[p][1])} por ano (20% de desconto), equivalente a ${format(prices[p][1]/12)} por mês`:`${name} · ${format(prices[p][0])} por mês`;
- const opts=document.getElementById('nd-payment-options');opts.hidden=!annual;
- const choice=document.getElementById('nd-payment-choice');
- if(qs.get('pagamento')==='parcelado')choice.value='parcelado';
- const sync=()=>{const url=new URL(location.href);if(annual)url.searchParams.set('pagamento',choice.value);history.replaceState(null,'',url)};
- choice.addEventListener('change',sync);
+(async()=>{
+ const selection=window.NexodentCatalog.choice(),format=c=>(c/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+ try{
+ const plans=await window.NexodentCatalog.ready,p=plans.find(p=>p.code===selection.plan);if(!p)throw Error('Plano indisponível');
+ try{localStorage.setItem('nexodent_plan_choice',JSON.stringify(selection));}catch{};
+ document.getElementById('nd-plan-description').textContent=p.monthly_cents===0?'Plano Grátis · sem mensalidade':p.name+' · '+format(selection.cycle==='annual'?p.annual_cents:p.monthly_cents)+(selection.cycle==='annual'?' por ano':' por mês')+' · teste de 7 dias';
+ document.getElementById('nd-payment-options').hidden=true;
+ const title=document.querySelector('.card>h2'),tag=document.querySelector('.tag');if(p.code==='gratis'){if(title)title.textContent='Crie sua conta gratuita';if(tag)tag.textContent='Plano gratuito · sem mensalidade';}
+ }catch(error){document.getElementById('nd-plan-description').textContent=error.message;document.getElementById('submit').disabled=true;}
 })();

@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const { createClient } = window.supabase;
 
 const cfg = window.NEXODENT_PUBLIC_CONFIG || {};
 const ready = /^https:\/\/[^\s]+$/.test(cfg.supabaseUrl || '') && !!cfg.supabaseAnonKey;
@@ -28,7 +28,7 @@ resendBox.innerHTML = `
 $('activate').appendChild(resendBox);
 const resendButton = $('resend-confirmation');
 const resendStatus = $('resend-status');
-const confirmationRedirect = () => new URL('cadastro.html', window.location.href).origin + new URL('cadastro.html', window.location.href).pathname;
+const confirmationRedirect = () => { const url=new URL('cadastro.html',window.location.href),choice=window.NexodentCatalog.choice();url.searchParams.set('plano',choice.plan);url.searchParams.set('ciclo',choice.cycle);return url.href; };
 const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 if (params.get('error_code') === 'otp_expired') {
   resendStatus.textContent = 'O link de confirmação expirou ou já foi utilizado. Solicite um novo e-mail abaixo.';
@@ -91,6 +91,7 @@ $('signup').addEventListener('submit', async (event) => {
   button.disabled = true;
   const email = val('email').toLowerCase();
   try {
+    await window.NexodentCatalog.ready;
     setMsg('Preparando seu cadastro...');
     const { error: requestError } = await client.rpc('nexodent_request_trial', {
       p_nome: val('name'),
@@ -108,9 +109,10 @@ $('signup').addEventListener('submit', async (event) => {
     const { data, error: signupError } = await client.auth.signUp({
       email,
       password: $('password').value,
-      options: { emailRedirectTo: new URL('cadastro.html', window.location.href).href }
+      options: { emailRedirectTo: confirmationRedirect(),data:{nome:val('name')} }
     });
     if (signupError) throw signupError;
+    $('password').value='';
     showActivation(email);
     if (data?.session) {
       setMsg('Conta autenticada. Se o e-mail já estiver confirmado, use “Entrar e ativar 7 dias”.');
@@ -138,17 +140,22 @@ $('activate-btn').addEventListener('click', async () => {
     setMsg('Verificando sua conta...');
     const { error: loginError } = await client.auth.signInWithPassword({ email, password });
     if (loginError) throw loginError;
+    $('login-password').value='';
     const { data: userResult, error: userError } = await client.auth.getUser();
     if (userError) throw userError;
     if (!userResult?.user?.email_confirmed_at) {
       throw new Error('Confirme seu e-mail antes de ativar o teste.');
     }
-    const { data, error } = await client.rpc('nexodent_activate_self_service_trial');
+    const choice=window.NexodentCatalog.choice();await window.NexodentCatalog.ready;
+    const { data, error } = await client.rpc('nexodent_start_trial',{p_plan:choice.plan,p_cycle:choice.cycle});
     if (error) throw error;
     if (!data?.ok) throw new Error('A ativação não foi confirmada.');
     const appUrl = cfg.appUrl || '';
-    setMsg('Teste de 7 dias ativado! ' + (/^https:\/\//.test(appUrl) ? 'Abrindo o NexoDent...' : 'O endereço do NexoDent ainda precisa ser configurado.'));
-    if (/^https:\/\//.test(appUrl)) setTimeout(() => window.location.assign(appUrl), 1800);
+    const destination=new URL(data.already_activated&&choice.plan!=='gratis'?'assinatura/index.html':'',appUrl.replace(/\/?$/,'/'));
+    if(data.already_activated&&choice.plan!=='gratis'){destination.searchParams.set('plano',choice.plan);destination.searchParams.set('ciclo',choice.cycle);}
+    setMsg((choice.plan==='gratis'?'Conta gratuita ativada!':'Teste de 7 dias ativado!')+' Entre no sistema com o mesmo e-mail e senha. Nenhuma cobrança foi feita.');
+    const link=document.createElement('a');link.href=destination.href;link.textContent=data.already_activated&&choice.plan!=='gratis'?'Gerenciar contratação':'Abrir NexoDent';link.className='btn';msg.append(document.createElement('br'),link);
+
   } catch (err) {
     setMsg('Não foi possível ativar: ' + (err.message || 'erro desconhecido'), true);
   } finally {
