@@ -1,0 +1,13 @@
+{
+  "name": "nexodent-site-validation",
+  "private": true,
+  "scripts": {
+    "test": "node tests/privacy.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

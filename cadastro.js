@@ -1,9 +1,13 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const { createClient } = window.supabase;
 
 const cfg = window.NEXODENT_PUBLIC_CONFIG || {};
 const ready = /^https:\/\/[^\s]+$/.test(cfg.supabaseUrl || '') && !!cfg.supabaseAnonKey;
 const $ = (id) => document.getElementById(id);
 const button = $('submit');
+if(window.NexoLegalAcceptance?.active()){
+ const label=document.createElement('label');label.innerHTML='<input type="checkbox" id="nd-terms" required style="width:auto;display:inline"> Li e aceito os <a href="./legal/termos.html" target="_blank" rel="noopener">termos de uso</a>.';
+ button.before(label);
+}
 const msg = $('message');
 const val = (id) => $(id).value.trim();
 const setMsg = (value, bad = false) => {
@@ -42,7 +46,7 @@ let client = null;
 if (ready) {
   try {
     client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: true }
     });
     button.disabled = false;
     $('config-warning').classList.add('hidden');
@@ -91,6 +95,11 @@ $('signup').addEventListener('submit', async (event) => {
   button.disabled = true;
   const email = val('email').toLowerCase();
   try {
+    const acceptance=window.NexoLegalAcceptance?.metadata($('nd-terms')?.checked);
+    if(acceptance){
+      const {data:documents,error:legalError}=await client.rpc('nexodent_legal_catalog');
+      if(legalError||!Array.isArray(documents)||!documents.some(doc=>doc.document===acceptance.document&&doc.version===acceptance.version&&doc.sha256===acceptance.sha256&&doc.scope==='account'))throw Error('Os termos ainda não estão disponíveis no servidor. O cadastro não foi enviado.');
+    }
     setMsg('Preparando seu cadastro...');
     const { error: requestError } = await client.rpc('nexodent_request_trial', {
       p_nome: val('name'),
@@ -108,7 +117,7 @@ $('signup').addEventListener('submit', async (event) => {
     const { data, error: signupError } = await client.auth.signUp({
       email,
       password: $('password').value,
-      options: { emailRedirectTo: new URL('cadastro.html', window.location.href).href }
+      options: { emailRedirectTo: new URL('cadastro.html', window.location.href).href, ...(acceptance?{data:{legal_acceptance:acceptance}}:{}) }
     });
     if (signupError) throw signupError;
     showActivation(email);

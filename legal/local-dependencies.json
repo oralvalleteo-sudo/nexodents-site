@@ -1,0 +1,20 @@
+{
+  "purpose": "Bibliotecas e fontes hospedadas na própria origem, com licenças incluídas. Atualizar hashes conscientemente ao atualizar uma dependência.",
+  "packages": {
+    "Figtree": "5.3.0",
+    "DM Sans": "5.3.0",
+    "Manrope": "5.3.0",
+    "supabase-js": "2.119.0"
+  },
+  "files": {
+    "assets/css/local-fonts.css": "4a07e05e11c5be91d2c23a536f0156d4cbed4f8f33ef5cabd363253543baeea9",
+    "assets/fonts/LICENSE-Figtree.txt": "ee23e6c84000126692e112ff067b456470493349f993ceaa8b4d3766dd6fad5d",
+    "assets/fonts/LICENSE-dm-sans.txt": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
+    "assets/fonts/LICENSE-manrope.txt": "d826ab6583b12c26807d8716a545bdbbb672df04f48608a364ba9efdbe501c30",
+    "assets/fonts/dm-sans-latin-wght-normal.woff2": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+    "assets/fonts/figtree-latin-variable.woff2": "4ba7d3d096695818fe0686be4f1e82c6b05134e18a22260336130335027462dd",
+    "assets/fonts/manrope-latin-wght-normal.woff2": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972",
+    "assets/vendor/LICENSE-supabase-js.txt": "334dd6820e2eaeab2064e7c59001b810566728a28a41a7c1dbf69bbee17d0936",
+    "assets/vendor/supabase-2.119.0.js": "a867edbcfb029370aeec7223dd6180b560b621fbe3bc64c6584fb0369d1b7bce"
+  }
+}
